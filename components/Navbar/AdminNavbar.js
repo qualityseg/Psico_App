@@ -29,8 +29,7 @@ const AdminNavbar = () => {
       const testToken = await AsyncStorage.getItem('token');
       console.log("Test token after removal: ", testToken);  // Deve ser null
       // Imprimir os valores armazenados no AsyncStorage
-      setAuthentication(false);
-      setUserData(null);  // Limpa os dados do usuário
+  
       navigation.navigate('Login');
       // Log do AsyncStorage após logout
       AsyncStorage.getAllKeys((err, keys) => {
