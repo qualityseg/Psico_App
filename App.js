@@ -1,20 +1,45 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AuthContext from './navigation/AuthContext';
+import AuthStack from './navigation/AuthStack';
+import MainTabNavigator from './navigation/MainTabNavigator';
 
-export default function App() {
+const RootStack = createStackNavigator();
+
+const App = () => {
+  const [isAuthenticated, setAuthentication] = useState(false);
+
+  useEffect(() => {
+    // Tente obter o token do armazenamento local para verificar se o usuário está autenticado
+    const tryToGetToken = async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        setAuthentication(true);
+      }
+    };
+
+    tryToGetToken();
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      
+      <RootStack.Navigator initialRouteName={isAuthenticated ? 'MainTabNavigator' : 'AuthStack'}>
+        <RootStack.Screen 
+          name="AuthStack" 
+          component={AuthStack} 
+          options={{ headerShown: false }} 
+        />
+        <RootStack.Screen 
+          name="MainTabNavigator" 
+          component={MainTabNavigator}
+          options={{ headerShown: false }}
+          // Removido: initialParams={{ setAuthentication: setAuthentication }} 
+        />
+      </RootStack.Navigator>
+    </NavigationContainer>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+};
+export default App;
