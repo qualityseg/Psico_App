@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Animated} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation , CommonActions} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import AuthContext from '../../navigation/AuthContext';
 
 const AdminNavbar = () => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [animationValue, setAnimationValue] = useState(new Animated.Value(0));
   const navigation = useNavigation();
-
+  const { logout } = useContext(AuthContext); 
+  
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
-
     Animated.timing(animationValue, {
       toValue: menuVisible ? 0 : 1,
       duration: 300,
@@ -20,27 +20,15 @@ const AdminNavbar = () => {
   };
 
   const handleLogout = async () => {
-    console.log("handleLogout chamado");
-    try {
-      const keys = await AsyncStorage.getAllKeys();
-      await AsyncStorage.multiRemove(keys);
-
-      // Debug: Verifique se o token foi realmente removido
-      const testToken = await AsyncStorage.getItem('token');
-      console.log("Test token after removal: ", testToken);  // Deve ser null
-      // Imprimir os valores armazenados no AsyncStorage
+    await logout();
+    
+    // Resetar o estado da navegação e navegar para 'MainTabNavigator'
+    const resetAction = CommonActions.reset({
+      index: 0,
+      routes: [{ name: 'AuthStack', params: { screen: 'Login' } }],
+    });
   
-      navigation.navigate('Login');
-      // Log do AsyncStorage após logout
-      AsyncStorage.getAllKeys((err, keys) => {
-        AsyncStorage.multiGet(keys, (err, stores) => {
-          console.log('Dados do AsyncStorage após o logout:', stores);
-        });
-      });
-      
-    } catch (e) {
-      console.error(e);
-    }
+    navigation.dispatch(resetAction);
   };
 
   const menuHeight = animationValue.interpolate({

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import AdminLayout from '../layouts/AdminLayout';
+import AuthContext from '../navigation/AuthContext';
 
 const imgFormularioDeRegistro = require('../assets/img/formulario-de-registro.png');
 const imgForma = require('../assets/img/forma.png');
@@ -14,17 +15,15 @@ const UserPanel = () => {
   const [instituicaoNome, setInstituicaoNome] = useState('');
   const [username, setUsername] = useState('');
   const [gender, setGender] = useState('');
+  const { userData } = useContext(AuthContext);
 
   const fetchData = async () => {
     const instituicao = await AsyncStorage.getItem('instituicaoNome');
     const user = await AsyncStorage.getItem('username');
     const userGender = await AsyncStorage.getItem('gender');
-    setInstituicaoNome(instituicao);
-    setUsername(user);
-    setGender(userGender);
     
     const dateObj = new Date(await AsyncStorage.getItem('birthDate'));
-    dateObj.setUTCMinutes(dateObj.getUTCMinutes() + dateObj.getTimezoneOffset());
+    
     const birthDate = dateObj.toLocaleDateString('pt-BR');
     const cpfRaw = await AsyncStorage.getItem('cpf');
     const cpfFormatted = cpfRaw ? cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '';
@@ -57,9 +56,49 @@ const UserPanel = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
+    if (userData) {
+      const fetchData = async () => {
+        const { username, institution, gender, birthDate, cpf } = userData;
+        
+        setUsername(username);
+        setInstituicaoNome(institution);
+        setGender(gender);
+  
+        const dateObj = new Date(birthDate);
+        const birthDateFormatted = dateObj.toLocaleDateString('pt-BR');
+        const cpfFormatted = cpf ? cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : '';
+  
+        setLoading(true);
+        try {
+          const [programasResponse, avaliacaoResponse] = await Promise.all([
+            axios.get(`https://weak-lamb-shift.cyclic.app/programas?instituicaoNome=${institution}`),
+            axios.get(`https://weak-lamb-shift.cyclic.app/checkAvaliacao?cpf=${cpf}&instituicaoNome=${institution}`)
+          ]);
+  
+          setProgramas(programasResponse.data.map(programa => {
+            const linkForm = `${programa.link_form}?nome=${username}&instituicao=${institution}&data=${birthDateFormatted}&cpf=${cpfFormatted}`;
+            return { ...programa, linkForm };
+          }));
+  
+          if (avaliacaoResponse.data.avaliacaoRealizada === 1) {
+            const newAvaliacaoState = {};
+            programasResponse.data.forEach(programa => {
+              newAvaliacaoState[programa.id] = true;
+            });
+            setAvaliacaoRealizada(newAvaliacaoState);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar dados:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchData();
+    }
+  }, [userData]);
+  
+  
   const greeting = gender === 'male' ? 'Seja Bem Vindo, ' : 'Seja Bem Vinda, ';
 
   const handlePress = (linkForm) => {
