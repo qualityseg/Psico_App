@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Image, View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ImageBackground, ScrollView } from 'react-native';
+import { Animated, Image, View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ImageBackground, ScrollView } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import AuthContext from '../navigation/AuthContext';
 
 const UserLogin = () => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
-  const { setAuthentication, setToken, setUserData } = useContext(AuthContext); // Use o contexto aqui
-
+  const { setAuthentication, setToken, setUserData } = useContext(AuthContext);
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -20,25 +19,30 @@ const UserLogin = () => {
   };
 
   useEffect(() => {
+    Animated.timing(
+      fadeAnim,
+      {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }
+    ).start();
+
     AsyncStorage.getAllKeys((err, keys) => {
       AsyncStorage.multiGet(keys, (err, stores) => {
         console.log('Dados do AsyncStorage no UserLogin:', stores);
       });
     });
   }, []);
-  
 
   const handleLogin = async () => {
-    
-  
     try {
       const response = await axios.post("https://weak-lamb-shift.cyclic.app/api/user/login", {
         Email: email,
         senha: senha,
       });
-  
+
       if (response.data.success) {
-        // Atualiza o estado de autenticação e salva os dados no AuthContext
         setAuthentication(true);
         setToken(response.data.token);
         setUserData({
@@ -49,60 +53,57 @@ const UserLogin = () => {
           cpf: response.data.cpf,
           gender: response.data.gender
         });
-      
-        // Salvar dados no AsyncStorage
+
         await AsyncStorage.setItem('username', response.data.username);
         await AsyncStorage.setItem('institution', response.data.institution);
         await AsyncStorage.setItem('role', response.data.role);
         await AsyncStorage.setItem('birthDate', response.data.birthDate);
         await AsyncStorage.setItem('cpf', response.data.cpf);
         await AsyncStorage.setItem('gender', response.data.gender);
-      
-        // Resetar o estado da navegação e navegar para 'MainTabNavigator'
+
         const resetAction = CommonActions.reset({
           index: 0,
           routes: [{ name: 'MainTabNavigator', params: { screen: 'UserPanel' } }],
         });
-      
+
         navigation.dispatch(resetAction);
       } else {
         Alert.alert("Falha", "Credenciais Incorretas!");
       }
-    
     } catch (error) {
       Alert.alert("Erro", "Algo deu errado!");
       console.error(error);
     }
   };
-  
-  
 
   return (
-    <ImageBackground source={{uri: 'https://imgur.com/CrlSHBe.png'}} style={styles.backgroundImage}>
-      <View style={styles.container}>
-        <View style={styles.contentColumn}>
-          <Image source={{uri: 'https://imgur.com/qwGDNx6.png'}} style={styles.logo} />
-          <TextInput
-            style={styles.input}
-            placeholder="Usuário"
-            value={email}
-            onChangeText={(text) => setEmail(text)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            secureTextEntry
-            value={senha}
-            onChangeText={(text) => setSenha(text)}
-          />
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Logar</Text>
-          </TouchableOpacity>
-           <Text style={styles.clickableText} onPress={handleFirstAccess}>Primeiro acesso</Text>
+    <Animated.View style={{flex: 1, opacity: fadeAnim}}>
+      <ImageBackground source={require('../assets/img/background.png')} style={styles.backgroundImage}>
+        <View style={styles.container}>
+          <View style={styles.contentColumn}>
+            <Image source={{uri: 'https://imgur.com/qwGDNx6.png'}} style={styles.logo} />
+            <TextInput
+              style={styles.input}
+              placeholder="Usuário"
+              value={email}
+              onChangeText={(text) => setEmail(text)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Senha"
+              secureTextEntry
+              value={senha}
+              onChangeText={(text) => setSenha(text)}
+            />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Logar</Text>
+            </TouchableOpacity>
+            <Text style={styles.clickableText} onPress={handleFirstAccess}>Primeiro acesso</Text>
+          </View>
         </View>
-      </View>
-    </ImageBackground>
+      </ImageBackground>
+    </Animated.View>
   );
 };
 
@@ -121,13 +122,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 10,
     padding: 20,
-    alignItems: 'center', // Centraliza os elementos na coluna
+    alignItems: 'center',
   },
   logo: {
-    width: '90%', // Ajustando o tamanho do logo para se encaixar na coluna
+    width: '90%',
     height: 100,
     marginBottom: 20,
-    resizeMode: 'contain', // Faz com que a imagem seja redimensionada para se ajustar ao container
+    resizeMode: 'contain',
   },
   input: {
     width: '100%',

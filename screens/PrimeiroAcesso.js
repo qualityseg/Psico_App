@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ImageBackground } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Animated, View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ImageBackground } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
 const PrimeiroAcesso = () => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;  // Inicializa a animação
   const navigation = useNavigation();
   const [Email, setEmail] = useState('');
   const [Senha, setSenha] = useState('');
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    Animated.timing(
+      fadeAnim,
+      {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }
+    ).start();
+  }, []);
 
   const verifyUser = async () => {
     try {
@@ -37,48 +49,49 @@ const PrimeiroAcesso = () => {
   };
 
   return (
-    
-    <ImageBackground source={{ uri: 'https://imgur.com/CrlSHBe.png' }} style={styles.backgroundImage}>
-      <View style={styles.container}>
-        <View style={styles.contentColumn}>
-        <Text style={styles.title}>{!verified ? 'Primeiro Acesso' : 'Cadastro de Senha'}</Text>
-        {!verified ? (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={Email}
-              onChangeText={(text) => setEmail(text)}
-            />
-            <TouchableOpacity style={styles.button} onPress={verifyUser}>
-              <Text style={styles.buttonText}>Verificar</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
-              secureTextEntry
-              value={Senha}
-              onChangeText={(text) => setSenha(text)}
-            />
-            <TouchableOpacity style={styles.button} onPress={registerPassword}>
-              <Text style={styles.buttonText}>Cadastrar senha</Text>
-            </TouchableOpacity>
-          </>
-        )}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
-    </View>
-    </ImageBackground>
+    <Animated.View style={{flex: 1, opacity: fadeAnim}}>
+      <ImageBackground source={require('../assets/img/background.png')} style={styles.backgroundImage}>
+        <View style={styles.container}>
+          <View style={styles.contentColumn}>
+            <Text style={styles.title}>{!verified ? 'Primeiro Acesso' : 'Cadastro de Senha'}</Text>
+            {!verified ? (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  value={Email}
+                  onChangeText={(text) => setEmail(text)}
+                />
+                <TouchableOpacity style={styles.button} onPress={verifyUser}>
+                  <Text style={styles.buttonText}>Verificar</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Senha"
+                  secureTextEntry
+                  value={Senha}
+                  onChangeText={(text) => setSenha(text)}
+                />
+                <TouchableOpacity style={styles.button} onPress={registerPassword}>
+                  <Text style={styles.buttonText}>Cadastrar senha</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          </View>
+        </View>
+      </ImageBackground>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover', // ou 'stretch'
+    resizeMode: 'cover',
   },
   container: {
     flex: 1,
