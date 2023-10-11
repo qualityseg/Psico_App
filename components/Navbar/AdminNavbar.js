@@ -33,7 +33,7 @@ const AdminNavbar = () => {
 
   const menuHeight = animationValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 100],  // Altura do menu dobrada
+    outputRange: [0, 150],  // Altura do menu ajustada para comportar mais opções
   });
 
   return (
@@ -52,6 +52,9 @@ const AdminNavbar = () => {
           <>
             <TouchableOpacity onPress={() => {/* navegar para o Painel do Paciente */}}>
               <Text style={styles.menuText}>Painel de Paciente</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout}>
+              <Text style={styles.menuText}>Sair</Text>
             </TouchableOpacity>
           </>
         )}
